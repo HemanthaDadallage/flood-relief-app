@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  /* Ensure Tailwind's reset is applied and remove conflicting custom styles */
+  @apply antialiased;
+}
