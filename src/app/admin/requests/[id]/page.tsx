@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase';
+import { createServerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -12,7 +12,7 @@ interface RequestDetailsPageProps {
 
 export default async function RequestDetailsPage({ params }: RequestDetailsPageProps) {
   const cookieStore = cookies();
-  const supabase = createServerClient();
+  const supabase = createServerClient({ cookies: () => cookieStore });
   const requestId = params.id;
 
   const {
@@ -59,10 +59,11 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
   // --- Server Actions ---
   const assignVolunteer = async (formData: FormData) => {
     'use server';
+    const cookieStore = cookies();
     const volunteerId = formData.get('volunteerId') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const serverSupabase = createServerClient();
+    const serverSupabase = createServerClient({ cookies: () => cookieStore });
     const { error } = await serverSupabase
       .from('help_requests')
       .update({ assigned_volunteer_id: volunteerId, status: 'in_progress' })
@@ -78,9 +79,10 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
 
   const unassignVolunteer = async (formData: FormData) => {
     'use server';
+    const cookieStore = cookies();
     const currentRequestId = formData.get('requestId') as string;
 
-    const serverSupabase = createServerClient();
+    const serverSupabase = createServerClient({ cookies: () => cookieStore });
     const { error } = await serverSupabase
       .from('help_requests')
       .update({ assigned_volunteer_id: null, status: 'open' })
@@ -95,10 +97,11 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
 
   const updateRequestStatus = async (formData: FormData) => {
     'use server';
+    const cookieStore = cookies();
     const newStatus = formData.get('status') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const serverSupabase = createServerClient();
+    const serverSupabase = createServerClient({ cookies: () => cookieStore });
     const { error } = await serverSupabase
       .from('help_requests')
       .update({ status: newStatus })
@@ -113,10 +116,11 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
 
   const updateAdminNotes = async (formData: FormData) => {
     'use server';
+    const cookieStore = cookies();
     const newNotes = formData.get('adminNotes') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const serverSupabase = createServerClient();
+    const serverSupabase = createServerClient({ cookies: () => cookieStore });
     const { error } = await serverSupabase
       .from('help_requests')
       .update({ admin_notes: newNotes })

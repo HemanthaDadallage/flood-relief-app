@@ -1,10 +1,10 @@
-import { createServerClient } from '@/lib/supabase';
+import { createServerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export default async function AdminDashboardPage() {
   const cookieStore = cookies();
-  const supabase = createServerClient();
+  const supabase = createServerClient({ cookies: () => cookieStore });
 
   const {
     data: { session },
@@ -43,7 +43,8 @@ export default async function AdminDashboardPage() {
 
   const handleLogout = async () => {
     'use server';
-    const supabase = createServerClient();
+    const cookieStore = cookies();
+    const supabase = createServerClient({ cookies: () => cookieStore });
     await supabase.auth.signOut();
     redirect('/admin/login');
   };
