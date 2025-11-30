@@ -11,7 +11,7 @@ interface RequestDetailsPageProps {
 }
 
 export default async function RequestDetailsPage({ params }: RequestDetailsPageProps) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -19,9 +19,6 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
       cookies: {
         getAll() {
           return cookieStore.getAll();
-        },
-        setAll(cookies) {
-          cookies.forEach((cookie) => cookieStore.set(cookie.name, cookie.value, cookie.options));
         },
       },
     }
@@ -75,7 +72,7 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     const volunteerId = formData.get('volunteerId') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -85,7 +82,10 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
             return cookieStore.getAll();
           },
           setAll(cookies) {
-            cookies.forEach((cookie) => cookieStore.set(cookie.name, cookie.value, cookie.options));
+            const store = cookieStore as unknown as {
+              set?: (name: string, value: string, options?: Record<string, unknown>) => void;
+            };
+            cookies.forEach((cookie) => store.set?.(cookie.name, cookie.value, cookie.options));
           },
         },
       }
@@ -107,7 +107,7 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     'use server';
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -117,7 +117,10 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
             return cookieStore.getAll();
           },
           setAll(cookies) {
-            cookies.forEach((cookie) => cookieStore.set(cookie.name, cookie.value, cookie.options));
+            const store = cookieStore as unknown as {
+              set?: (name: string, value: string, options?: Record<string, unknown>) => void;
+            };
+            cookies.forEach((cookie) => store.set?.(cookie.name, cookie.value, cookie.options));
           },
         },
       }
@@ -139,7 +142,7 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     const newStatus = formData.get('status') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -149,7 +152,10 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
             return cookieStore.getAll();
           },
           setAll(cookies) {
-            cookies.forEach((cookie) => cookieStore.set(cookie.name, cookie.value, cookie.options));
+            const store = cookieStore as unknown as {
+              set?: (name: string, value: string, options?: Record<string, unknown>) => void;
+            };
+            cookies.forEach((cookie) => store.set?.(cookie.name, cookie.value, cookie.options));
           },
         },
       }
@@ -171,7 +177,7 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     const newNotes = formData.get('adminNotes') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -181,7 +187,10 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
             return cookieStore.getAll();
           },
           setAll(cookies) {
-            cookies.forEach((cookie) => cookieStore.set(cookie.name, cookie.value, cookie.options));
+            const store = cookieStore as unknown as {
+              set?: (name: string, value: string, options?: Record<string, unknown>) => void;
+            };
+            cookies.forEach((cookie) => store.set?.(cookie.name, cookie.value, cookie.options));
           },
         },
       }
