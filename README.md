@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flood Relief Rapid-Response App
+Next.js + Tailwind + Supabase app that connects people needing help with volunteers. Includes public “Need Help” / “Want to Help” forms and a secure admin dashboard with matching and status updates.
 
-## Getting Started
-
-First, run the development server:
-
+## Quick Start
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# app will start on http://localhost:3000 (or an open port)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
+Create `.env.local` with your Supabase project values:
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=... # only needed if you add server-side writes
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase Setup
+1) Create a Supabase project.  
+2) In the SQL editor, run `docs/supabase-schema.sql` to create tables, enums, RLS policies, and the admin helper function.  
+3) Create an auth user for admins, then add it to `admin_profiles`:
+```sql
+insert into admin_profiles (id, role) values ('<auth-user-uuid>', 'admin');
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Tables (simplified):
+- `help_requests`: submissions from the public, with urgency, status, admin notes, and optional assigned volunteer.
+- `volunteers`: registered volunteers with skills (`type_of_help` array), availability, and status.
+- `admin_profiles`: marks which Supabase auth users can access the dashboard.
 
-## Learn More
+## Admin Dashboard
+- `/admin/login`: Supabase email/password login for admins.
+- `/admin/dashboard`: filter/search by status, urgency, location, or text; view and drill into requests.
+- `/admin/requests/[id]`: assign/unassign volunteers, update status, add notes, and see suggested volunteers.
 
-To learn more about Next.js, take a look at the following resources:
+## Testing & Linting
+```bash
+npm test -- --runInBand
+npm run lint
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+- Vercel works out of the box. Set the Supabase environment variables in the project settings.
+- Ensure the Supabase schema and admin profile are applied before going live.

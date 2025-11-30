@@ -2,9 +2,27 @@ import { createServerClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
-  const supabase = createServerClient({ req, res });
+
+  const supabase = createServerClient(supabaseUrl!, supabaseAnonKey!, {
+    cookies: {
+      getAll() {
+        return req.cookies.getAll().map((cookie) => ({
+          name: cookie.name,
+          value: cookie.value,
+        }));
+      },
+      setAll(cookies) {
+        cookies.forEach(({ name, value, options }) => {
+          res.cookies.set({ name, value, ...options });
+        });
+      },
+    },
+  });
 
   const {
     data: { session },

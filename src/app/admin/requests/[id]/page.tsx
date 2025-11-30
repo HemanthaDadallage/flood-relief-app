@@ -12,7 +12,20 @@ interface RequestDetailsPageProps {
 
 export default async function RequestDetailsPage({ params }: RequestDetailsPageProps) {
   const cookieStore = cookies();
-  const supabase = createServerClient({ cookies: () => cookieStore });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookies) {
+          cookies.forEach((cookie) => cookieStore.set(cookie.name, cookie.value, cookie.options));
+        },
+      },
+    }
+  );
   const requestId = params.id;
 
   const {
@@ -44,11 +57,11 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
   if (requestFetchError || !request) {
     console.error('Error fetching help request:', requestFetchError);
     return (
-      <main className=\"min-h-screen p-4 bg-gray-50 dark:bg-gray-900 text-red-600 dark:text-red-400\">
-        <div className=\"max-w-4xl mx-auto\">
-          <h1 className=\"text-3xl font-bold mb-4\">Request Not Found</h1>
+      <main className="min-h-screen p-4 bg-gray-50 dark:bg-gray-900 text-red-600 dark:text-red-400">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-4">Request Not Found</h1>
           <p>The help request you are looking for does not exist or an error occurred.</p>
-          <Link href=\"/admin/dashboard\" className=\"mt-4 inline-block text-emerald-600 hover:underline\">
+          <Link href="/admin/dashboard" className="mt-4 inline-block text-emerald-600 hover:underline">
             Back to Dashboard
           </Link>
         </div>
@@ -59,11 +72,24 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
   // --- Server Actions ---
   const assignVolunteer = async (formData: FormData) => {
     'use server';
-    const cookieStore = cookies();
     const volunteerId = formData.get('volunteerId') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const serverSupabase = createServerClient({ cookies: () => cookieStore });
+    const cookieStore = cookies();
+    const serverSupabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookies) {
+            cookies.forEach((cookie) => cookieStore.set(cookie.name, cookie.value, cookie.options));
+          },
+        },
+      }
+    );
     const { error } = await serverSupabase
       .from('help_requests')
       .update({ assigned_volunteer_id: volunteerId, status: 'in_progress' })
@@ -79,10 +105,23 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
 
   const unassignVolunteer = async (formData: FormData) => {
     'use server';
-    const cookieStore = cookies();
     const currentRequestId = formData.get('requestId') as string;
 
-    const serverSupabase = createServerClient({ cookies: () => cookieStore });
+    const cookieStore = cookies();
+    const serverSupabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookies) {
+            cookies.forEach((cookie) => cookieStore.set(cookie.name, cookie.value, cookie.options));
+          },
+        },
+      }
+    );
     const { error } = await serverSupabase
       .from('help_requests')
       .update({ assigned_volunteer_id: null, status: 'open' })
@@ -97,11 +136,24 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
 
   const updateRequestStatus = async (formData: FormData) => {
     'use server';
-    const cookieStore = cookies();
     const newStatus = formData.get('status') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const serverSupabase = createServerClient({ cookies: () => cookieStore });
+    const cookieStore = cookies();
+    const serverSupabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookies) {
+            cookies.forEach((cookie) => cookieStore.set(cookie.name, cookie.value, cookie.options));
+          },
+        },
+      }
+    );
     const { error } = await serverSupabase
       .from('help_requests')
       .update({ status: newStatus })
@@ -116,11 +168,24 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
 
   const updateAdminNotes = async (formData: FormData) => {
     'use server';
-    const cookieStore = cookies();
     const newNotes = formData.get('adminNotes') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const serverSupabase = createServerClient({ cookies: () => cookieStore });
+    const cookieStore = cookies();
+    const serverSupabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookies) {
+            cookies.forEach((cookie) => cookieStore.set(cookie.name, cookie.value, cookie.options));
+          },
+        },
+      }
+    );
     const { error } = await serverSupabase
       .from('help_requests')
       .update({ admin_notes: newNotes })
@@ -151,15 +216,15 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
   const requestStatuses = ['open', 'in_progress', 'completed', 'cancelled'];
 
   return (
-    <main className=\"min-h-screen p-4 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50\">
-      <div className=\"max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-6\">
-        <h1 className=\"text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-6\">
+    <main className="min-h-screen p-4 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
+      <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h1 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-6">
           Help Request Details - {request.id.substring(0, 8)}...
         </h1>
 
-        <div className=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div>
-            <h2 className=\"text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100\">Request Information</h2>
+            <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">Request Information</h2>
             <p><strong>Name:</strong> {request.name || 'N/A'}</p>
             <p><strong>Contact:</strong> {request.contact_info}</p>
             <p><strong>Location:</strong> {request.location}</p>
@@ -169,56 +234,56 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
             <p><strong>Description:</strong> {request.description || 'N/A'}</p>
           </div>
           <div>
-            <h2 className=\"text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100\">Status & Assignment</h2>
-            <p className=\"mb-2\"><strong>Current Status:</strong> <span className=\"font-semibold text-blue-600\">{request.status}</span></p>
+            <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">Status & Assignment</h2>
+            <p className="mb-2"><strong>Current Status:</strong> <span className="font-semibold text-blue-600">{request.status}</span></p>
 
-            <form action={updateRequestStatus} className=\"flex gap-2 items-center mb-4\">
-              <input type=\"hidden\" name=\"requestId\" value={request.id} />
-              <label htmlFor=\"statusSelect\" className=\"sr-only\">Update Status</label>
+            <form action={updateRequestStatus} className="flex gap-2 items-center mb-4">
+              <input type="hidden" name="requestId" value={request.id} />
+              <label htmlFor="statusSelect" className="sr-only">Update Status</label>
               <select
-                id=\"statusSelect\"
-                name=\"status\"
+                id="statusSelect"
+                name="status"
                 defaultValue={request.status}
-                className=\"block w-full md:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white\"
+                className="block w-full md:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               >
                 {requestStatuses.map((statusOption) => (
                   <option key={statusOption} value={statusOption}>{statusOption.replace('_', ' ')}</option>
                 ))}
               </select>
               <button
-                type=\"submit\"
-                className=\"px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md shadow-md transition-colors text-sm\"
+                type="submit"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md shadow-md transition-colors text-sm"
               >
                 Update
               </button>
             </form>
 
-            <p className=\"mb-2\"><strong>Assigned Volunteer:</strong> {request.assigned_volunteer_id ? (
-              <span className=\"font-semibold\">{request.assigned_volunteer_id}</span>
+            <p className="mb-2"><strong>Assigned Volunteer:</strong> {request.assigned_volunteer_id ? (
+              <span className="font-semibold">{request.assigned_volunteer_id}</span>
             ) : (
               'Not yet assigned.'
             )}</p>
             {request.assigned_volunteer_id && (
                 <form action={unassignVolunteer}>
-                    <input type=\"hidden\" name=\"requestId\" value={request.id} />
-                    <button type=\"submit\" className=\"px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-md shadow-md transition-colors text-sm\">
+                    <input type="hidden" name="requestId" value={request.id} />
+                    <button type="submit" className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-md shadow-md transition-colors text-sm">
                         Unassign Volunteer
                     </button>
                 </form>
             )}
 
-            <h3 className=\"text-lg font-semibold mt-4 mb-2 text-gray-800 dark:text-gray-100\">Admin Notes</h3>
+            <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-800 dark:text-gray-100">Admin Notes</h3>
             <form action={updateAdminNotes}>
-                <input type=\"hidden\" name=\"requestId\" value={request.id} />
+                <input type="hidden" name="requestId" value={request.id} />
                 <textarea
-                    name=\"adminNotes\"
+                    name="adminNotes"
                     rows={3}
                     defaultValue={request.admin_notes || ''}
-                    className=\"mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white\"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 ></textarea>
                 <button
-                    type=\"submit\"
-                    className=\"mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-md transition-colors text-sm\"
+                    type="submit"
+                    className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-md transition-colors text-sm"
                 >
                     Save Notes
                 </button>
@@ -226,52 +291,56 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
           </div>
         </div>
 
-        <h2 className=\"text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4\">
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
           Suggested Volunteers for {request.type_of_need} in {request.location}
         </h2>
         {matchingVolunteers && matchingVolunteers.length > 0 ? (
-          <div className=\"overflow-x-auto mb-8\">
-            <table className=\"min-w-full divide-y divide-gray-200 dark:divide-gray-700\">
-              <thead className=\"bg-gray-50 dark:bg-gray-700\">
+          <div className="overflow-x-auto mb-8">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th scope=\"col\" className=\"px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider\">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Name
                   </th>
-                  <th scope=\"col\" className=\"px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider\">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Contact
                   </th>
-                  <th scope=\"col\" className=\"px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider\">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Location
                   </th>
-                  <th scope=\"col\" className=\"px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider\">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Can Help With
                   </th>
-                  <th scope=\"col\" className=\"px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider\">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Availability
                   </th>
-                  <th scope=\"col\" className=\"px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider\">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className=\"bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700\">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {matchingVolunteers.map((volunteer) => (
                   <tr key={volunteer.id}>
-                    <td className=\"px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50\">{volunteer.name}</td>
-                    <td className=\"px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50\">{volunteer.contact_info}</td>
-                    <td className=\"px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50\">{volunteer.location}</td>
-                    <td className=\"px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50\">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50">{volunteer.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50">{volunteer.contact_info}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50">{volunteer.location}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50">
                       {volunteer.type_of_help.join(', ')}
                     </td>
-                    <td className=\"px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50\">{volunteer.availability || 'N/A'}</td>
-                    <td className=\"px-6 py-4 whitespace-nowrap text-right text-sm font-medium\">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50">{volunteer.availability || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <form action={assignVolunteer}>
-                          <input type=\"hidden\" name=\"volunteerId\" value={volunteer.id} />
-                          <input type=\"hidden\" name=\"requestId\" value={request.id} />
-                          <button type=\"submit\" className=\"text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-2\">Assign</button>
+                          <input type="hidden" name="volunteerId" value={volunteer.id} />
+                          <input type="hidden" name="requestId" value={request.id} />
+                          <button type="submit" className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-2">Assign</button>
                       </form>
-                      {/* TODO: Add contact mechanism */}
-                      <button className=\"text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300\">Contact</button>
+                      <a
+                        href={`mailto:${volunteer.contact_info}?subject=Help Request for: ${request.type_of_need} in ${request.location}&body=Hi ${volunteer.name},%0A%0AWe are contacting you about a help request in your area. Please see the details below:%0A%0A- Type of Need: ${request.type_of_need}%0A- Location: ${request.location}%0A%0AThank you for your help!%0A%0A`}
+                        className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300"
+                      >
+                        Contact
+                      </a>
                     </td>
                   </tr>
                 ))}
@@ -279,10 +348,10 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
             </table>
           </div>
         ) : (
-          <p className=\"text-gray-600 dark:text-gray-300 mb-8\">No matching volunteers found for this request based on location and type of need.</p>
+          <p className="text-gray-600 dark:text-gray-300 mb-8">No matching volunteers found for this request based on location and type of need.</p>
         )}
 
-        <Link href=\"/admin/dashboard\" className=\"inline-block px-6 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium rounded-md shadow-md transition-colors\">
+        <Link href="/admin/dashboard" className="inline-block px-6 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium rounded-md shadow-md transition-colors">
           Back to Dashboard
         </Link>
       </div>

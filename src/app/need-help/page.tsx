@@ -15,20 +15,22 @@ export default function NeedHelpPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  const [loading, setLoading] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmissionStatus('Submitting...');
+    setLoading(true);
+    setSubmissionStatus('');
     setError('');
 
     // Basic client-side validation
     if (!contactInfo || !location || !typeOfNeed || !urgency) {
       setError('Please fill in all required fields (Contact Info, Location, Type of Need, Urgency).');
-      setSubmissionStatus('');
       return;
     }
 
     try {
-      const { data, error: supabaseError } = await supabase
+      const { error: supabaseError } = await supabase
         .from('help_requests')
         .insert([
           {
@@ -54,12 +56,16 @@ export default function NeedHelpPage() {
       setDescription('');
       setUrgency('medium');
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred. Please try again later.';
       console.error('Error submitting help request:', err);
-      setError(err.message || 'An unexpected error occurred during submission.');
-      setSubmissionStatus('');
+      setError(message);
+    } finally {
+      setLoading(false);
     }
   };
+
+
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
@@ -71,7 +77,7 @@ export default function NeedHelpPage() {
           Please fill out this form so we can connect you with available volunteers.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Your Name (Optional)
@@ -163,21 +169,22 @@ export default function NeedHelpPage() {
           </div>
 
           {submissionStatus && (
-            <p className="text-center text-green-600 dark:text-green-400 font-medium">
+            <div className="p-4 bg-green-600 text-white rounded-md">
               {submissionStatus}
-            </p>
+            </div>
           )}
           {error && (
-            <p className="text-center text-red-600 dark:text-red-400 font-medium">
+            <div className="p-4 bg-red-600 text-white rounded-md">
               {error}
-            </p>
+            </div>
           )}
 
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            disabled={loading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-gray-400"
           >
-            Submit Request
+            {loading ? 'Submitting...' : 'Submit Request'}
           </button>
         </form>
 

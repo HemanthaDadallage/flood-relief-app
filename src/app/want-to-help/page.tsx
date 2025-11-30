@@ -14,6 +14,8 @@ export default function WantToHelpPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  const [loading, setLoading] = useState(false);
+
   const handleTypeOfHelpChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const options = Array.from(e.target.selectedOptions).map((option) => option.value);
     setTypeOfHelp(options);
@@ -21,18 +23,19 @@ export default function WantToHelpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmissionStatus('Submitting...');
+    setLoading(true);
+    setSubmissionStatus('');
     setError('');
 
     // Basic client-side validation
     if (!name || !contactInfo || !location || typeOfHelp.length === 0) {
       setError('Please fill in all required fields (Name, Contact Info, Location, Type of Help).');
-      setSubmissionStatus('');
+      setLoading(false);
       return;
     }
 
     try {
-      const { data, error: supabaseError } = await supabase
+      const { error: supabaseError } = await supabase
         .from('volunteers')
         .insert([
           {
@@ -56,12 +59,19 @@ export default function WantToHelpPage() {
       setTypeOfHelp([]);
       setAvailability('');
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred. Please try again later.';
       console.error('Error submitting volunteer offer:', err);
-      setError(err.message || 'An unexpected error occurred during submission.');
-      setSubmissionStatus('');
+      setError(message);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleFocus = () => {
+    setSubmissionStatus('');
+    setError('');
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
@@ -73,7 +83,7 @@ export default function WantToHelpPage() {
           Thank you for your willingness to help! Please tell us what you can offer.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Your Name <span className="text-red-500">*</span>
@@ -82,6 +92,7 @@ export default function WantToHelpPage() {
               type="text"
               id="name"
               value={name}
+              onFocus={handleFocus}
               onChange={(e) => setName(e.target.value)}
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -96,6 +107,7 @@ export default function WantToHelpPage() {
               type="text"
               id="contactInfo"
               value={contactInfo}
+              onFocus={handleFocus}
               onChange={(e) => setContactInfo(e.target.value)}
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -110,6 +122,7 @@ export default function WantToHelpPage() {
               type="text"
               id="location"
               value={location}
+              onFocus={handleFocus}
               onChange={(e) => setLocation(e.target.value)}
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -124,6 +137,7 @@ export default function WantToHelpPage() {
               id="typeOfHelp"
               multiple
               value={typeOfHelp}
+              onFocus={handleFocus}
               onChange={handleTypeOfHelpChange}
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -145,27 +159,29 @@ export default function WantToHelpPage() {
               type="text"
               id="availability"
               value={availability}
+              onFocus={handleFocus}
               onChange={(e) => setAvailability(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
           </div>
 
           {submissionStatus && (
-            <p className="text-center text-green-600 dark:text-green-400 font-medium">
+            <div data-testid="submission-status" className="p-4 bg-green-600 text-white rounded-md">
               {submissionStatus}
-            </p>
+            </div>
           )}
           {error && (
-            <p className="text-center text-red-600 dark:text-red-400 font-medium">
+            <div data-testid="error-message" className="p-4 bg-red-600 text-white rounded-md">
               {error}
-            </p>
+            </div>
           )}
 
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            disabled={loading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
           >
-            Submit Offer
+            {loading ? 'Submitting...' : 'Submit Offer'}
           </button>
         </form>
 
