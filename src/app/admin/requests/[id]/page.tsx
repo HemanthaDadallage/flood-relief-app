@@ -11,14 +11,14 @@ interface RequestDetailsPageProps {
 }
 
 export default async function RequestDetailsPage({ params }: RequestDetailsPageProps) {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return cookieStore.getAll();
+        async getAll() {
+          return (await cookieStore).getAll();
         },
       },
     }
@@ -72,20 +72,14 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     const volunteerId = formData.get('volunteerId') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookies) {
-            const store = cookieStore as unknown as {
-              set?: (name: string, value: string, options?: Record<string, unknown>) => void;
-            };
-            cookies.forEach((cookie) => store.set?.(cookie.name, cookie.value, cookie.options));
+          async getAll() {
+            return (await cookieStore).getAll();
           },
         },
       }
@@ -107,20 +101,14 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     'use server';
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookies) {
-            const store = cookieStore as unknown as {
-              set?: (name: string, value: string, options?: Record<string, unknown>) => void;
-            };
-            cookies.forEach((cookie) => store.set?.(cookie.name, cookie.value, cookie.options));
+          async getAll() {
+            return (await cookieStore).getAll();
           },
         },
       }
@@ -142,20 +130,14 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     const newStatus = formData.get('status') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookies) {
-            const store = cookieStore as unknown as {
-              set?: (name: string, value: string, options?: Record<string, unknown>) => void;
-            };
-            cookies.forEach((cookie) => store.set?.(cookie.name, cookie.value, cookie.options));
+          async getAll() {
+            return (await cookieStore).getAll();
           },
         },
       }
@@ -177,20 +159,14 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     const newNotes = formData.get('adminNotes') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookies) {
-            const store = cookieStore as unknown as {
-              set?: (name: string, value: string, options?: Record<string, unknown>) => void;
-            };
-            cookies.forEach((cookie) => store.set?.(cookie.name, cookie.value, cookie.options));
+          async getAll() {
+            return (await cookieStore).getAll();
           },
         },
       }

@@ -16,11 +16,6 @@ export async function middleware(req: NextRequest) {
           value: cookie.value,
         }));
       },
-      setAll(cookies) {
-        cookies.forEach(({ name, value, options }) => {
-          res.cookies.set({ name, value, ...options });
-        });
-      },
     },
   });
 
