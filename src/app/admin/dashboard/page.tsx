@@ -15,14 +15,14 @@ const statusOptions = ['all', 'open', 'in_progress', 'completed', 'cancelled'];
 const urgencyOptions = ['all', 'high', 'medium', 'low'];
 
 export default async function AdminDashboardPage({ searchParams }: AdminDashboardPageProps) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        async getAll() {
-          return (await cookieStore).getAll();
+        getAll() {
+          return cookieStore.getAll();
         },
       },
     }
@@ -87,14 +87,14 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
   const handleLogout = async () => {
     'use server';
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          async getAll() {
-            return (await cookieStore).getAll();
+          getAll() {
+            return cookieStore.getAll();
           },
         },
       }

@@ -11,14 +11,14 @@ interface RequestDetailsPageProps {
 }
 
 export default async function RequestDetailsPage({ params }: RequestDetailsPageProps) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        async getAll() {
-          return (await cookieStore).getAll();
+        getAll() {
+          return cookieStore.getAll();
         },
       },
     }
@@ -72,14 +72,14 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     const volunteerId = formData.get('volunteerId') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          async getAll() {
-            return (await cookieStore).getAll();
+          getAll() {
+            return cookieStore.getAll();
           },
         },
       }
@@ -101,14 +101,14 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     'use server';
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          async getAll() {
-            return (await cookieStore).getAll();
+          getAll() {
+            return cookieStore.getAll();
           },
         },
       }
@@ -130,14 +130,14 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     const newStatus = formData.get('status') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          async getAll() {
-            return (await cookieStore).getAll();
+          getAll() {
+            return cookieStore.getAll();
           },
         },
       }
@@ -159,14 +159,14 @@ export default async function RequestDetailsPage({ params }: RequestDetailsPageP
     const newNotes = formData.get('adminNotes') as string;
     const currentRequestId = formData.get('requestId') as string;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const serverSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          async getAll() {
-            return (await cookieStore).getAll();
+          getAll() {
+            return cookieStore.getAll();
           },
         },
       }
