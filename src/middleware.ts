@@ -23,43 +23,6 @@ export async function middleware(req: NextRequest) {
           res.cookies.set(cookie.name, cookie.value, cookie.options);
         });
       },
-      /**
-       * For parity with the server helpers API we also pass through get/set by name,
-       * though only getAll/setAll are used during auth flows.
-       */
-      get(name: string): SupabaseCookie | undefined {
-        const cookie = req.cookies.get(name);
-        return cookie
-          ? { name: cookie.name, value: cookie.value }
-          : undefined;
-      },
-      set(name: string, value: string, options?: CookieOptions) {
-        res.cookies.set(name, value, options);
-      },
-      remove(name: string, options?: CookieOptions) {
-        res.cookies.set(name, '', { ...options, maxAge: 0 });
-      },
-      /**
-       * The helper expects delete to exist; alias to remove.
-       */
-      delete(name: string, options?: CookieOptions) {
-        res.cookies.set(name, '', { ...options, maxAge: 0 });
-      },
-      /**
-       * The helper expects has to exist; check via get.
-       */
-      has(name: string) {
-        return req.cookies.has(name);
-      },
-      /**
-       * Compatibility: async version if helper calls it.
-       */
-      async getAllAsync(): Promise<SupabaseCookie[]> {
-        return req.cookies.getAll().map((cookie) => ({
-          name: cookie.name,
-          value: cookie.value,
-        }));
-      },
     },
   });
 
