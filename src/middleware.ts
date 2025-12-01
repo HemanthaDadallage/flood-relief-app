@@ -26,6 +26,11 @@ export async function middleware(req: NextRequest) {
   const isAdminRoute = req.nextUrl.pathname.startsWith('/admin');
   const isLoginPage = req.nextUrl.pathname.startsWith('/admin/login');
 
+  // Allow the login page to load even when there is no session
+  if (isLoginPage && !session) {
+    return res;
+  }
+
   if (isAdminRoute && !session) {
     // If trying to access admin route without a session, redirect to login
     const redirectUrl = req.nextUrl.clone();
