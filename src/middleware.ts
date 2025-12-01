@@ -7,10 +7,54 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
+  type CookieOptions = Parameters<typeof res.cookies.set>[2];
+  type SupabaseCookie = { name: string; value: string; options?: CookieOptions };
 
   const supabase = createServerClient(supabaseUrl!, supabaseAnonKey!, {
     cookies: {
-      getAll() {
+      getAll(): SupabaseCookie[] {
+        return req.cookies.getAll().map((cookie) => ({
+          name: cookie.name,
+          value: cookie.value,
+        }));
+      },
+      setAll(cookies: SupabaseCookie[]) {
+        cookies.forEach((cookie) => {
+          res.cookies.set(cookie.name, cookie.value, cookie.options);
+        });
+      },
+      /**
+       * For parity with the server helpers API we also pass through get/set by name,
+       * though only getAll/setAll are used during auth flows.
+       */
+      get(name: string): SupabaseCookie | undefined {
+        const cookie = req.cookies.get(name);
+        return cookie
+          ? { name: cookie.name, value: cookie.value }
+          : undefined;
+      },
+      set(name: string, value: string, options?: CookieOptions) {
+        res.cookies.set(name, value, options);
+      },
+      remove(name: string, options?: CookieOptions) {
+        res.cookies.set(name, '', { ...options, maxAge: 0 });
+      },
+      /**
+       * The helper expects delete to exist; alias to remove.
+       */
+      delete(name: string, options?: CookieOptions) {
+        res.cookies.set(name, '', { ...options, maxAge: 0 });
+      },
+      /**
+       * The helper expects has to exist; check via get.
+       */
+      has(name: string) {
+        return req.cookies.has(name);
+      },
+      /**
+       * Compatibility: async version if helper calls it.
+       */
+      async getAllAsync(): Promise<SupabaseCookie[]> {
         return req.cookies.getAll().map((cookie) => ({
           name: cookie.name,
           value: cookie.value,
