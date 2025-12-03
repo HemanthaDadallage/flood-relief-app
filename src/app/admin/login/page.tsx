@@ -1,73 +1,50 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase'; // Client-side Supabase client
+import { supabase } from '@/lib/supabase';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError('');
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (authError) {
-      setError(authError.message);
+    if (signInError) {
+      setError(signInError.message);
       setLoading(false);
       return;
     }
 
-    // Check if the authenticated user is an admin
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      const { data: adminProfile, error: profileError } = await supabase
-        .from('admin_profiles')
-        .select('id, role')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError || !adminProfile) {
-        // Not an admin or error fetching profile, log out
-        await supabase.auth.signOut();
-        setError('You are not authorized to access the admin panel.');
-        setLoading(false);
-        return;
-      }
-    } else {
-        setError('Authentication failed. No user found.');
-        setLoading(false);
-        return;
-    }
-
-    setLoading(false);
-    router.push('/admin/dashboard'); // Redirect to admin dashboard
+    // On successful login, the middleware should handle the redirect.
+    // We can also add a client-side push as a fallback.
+    router.push('/admin/dashboard');
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
       <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
         <h1 className="text-3xl font-bold text-center text-emerald-600 dark:text-emerald-400">
           Admin Login
         </h1>
-        <p className="text-center text-gray-600 dark:text-gray-300">
-          Sign in to access the Flood Relief Administration Panel.
-        </p>
-
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Email
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+            >
+              Email Address
             </label>
             <input
               type="email"
@@ -80,7 +57,10 @@ export default function AdminLoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+            >
               Password
             </label>
             <input
@@ -94,20 +74,20 @@ export default function AdminLoginPage() {
           </div>
 
           {error && (
-            <p className="text-center text-red-600 dark:text-red-400 font-medium">
+            <div className="p-4 bg-red-600 text-white rounded-md text-center">
               {error}
-            </p>
+            </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:bg-gray-400"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,345 +1,226 @@
-import { createServerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 
-interface RequestDetailsPageProps {
-  params: {
-    id: string;
-  };
+export const revalidate = 0; // Revalidate data on every request
+
+// Fetch details for a single help request, including assigned volunteer info
+async function getHelpRequestDetails(id: string) {
+  const cookieStore = cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+
+  const { data, error } = await supabase
+    .from('help_requests')
+    .select(`
+      *,
+      volunteer:volunteers ( id, name, contact_info, location )
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching help request details:', error);
+    return null;
+  }
+  return data;
 }
 
-export default async function RequestDetailsPage({ params }: RequestDetailsPageProps) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-      },
-    }
-  );
-  const requestId = params.id;
+// Fetch suggested volunteers based on location and type of need
+async function getSuggestedVolunteers(location: string, typeOfNeed: string) {
+  const cookieStore = cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    redirect('/admin/login');
-  }
-
-  // Verify if the user is an admin
-  const { data: adminProfile, error: profileError } = await supabase
-    .from('admin_profiles')
-    .select('id, role')
-    .eq('id', session.user.id)
-    .single();
-
-  if (profileError || !adminProfile) {
-    redirect('/?message=You are not authorized to access the admin panel.');
-  }
-
-  // Fetch specific help request
-  const { data: request, error: requestFetchError } = await supabase
-    .from('help_requests')
-    .select('*')
-    .eq('id', requestId)
-    .single();
-
-  if (requestFetchError || !request) {
-    console.error('Error fetching help request:', requestFetchError);
-    return (
-      <main className="min-h-screen p-4 bg-gray-50 dark:bg-gray-900 text-red-600 dark:text-red-400">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-4">Request Not Found</h1>
-          <p>The help request you are looking for does not exist or an error occurred.</p>
-          <Link href="/admin/dashboard" className="mt-4 inline-block text-emerald-600 hover:underline">
-            Back to Dashboard
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
-  // --- Server Actions ---
-  const assignVolunteer = async (formData: FormData) => {
-    'use server';
-    const volunteerId = formData.get('volunteerId') as string;
-    const currentRequestId = formData.get('requestId') as string;
-
-    const cookieStore = await cookies();
-    const serverSupabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
-    );
-    const { error } = await serverSupabase
-      .from('help_requests')
-      .update({ assigned_volunteer_id: volunteerId, status: 'in_progress' })
-      .eq('id', currentRequestId);
-
-    if (error) {
-      console.error('Error assigning volunteer:', error);
-      // Handle error, maybe show a toast
-    } else {
-      revalidatePath(`/admin/requests/${currentRequestId}`);
-    }
-  };
-
-  const unassignVolunteer = async (formData: FormData) => {
-    'use server';
-    const currentRequestId = formData.get('requestId') as string;
-
-    const cookieStore = await cookies();
-    const serverSupabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
-    );
-    const { error } = await serverSupabase
-      .from('help_requests')
-      .update({ assigned_volunteer_id: null, status: 'open' })
-      .eq('id', currentRequestId);
-
-    if (error) {
-      console.error('Error unassigning volunteer:', error);
-    } else {
-      revalidatePath(`/admin/requests/${currentRequestId}`);
-    }
-  };
-
-  const updateRequestStatus = async (formData: FormData) => {
-    'use server';
-    const newStatus = formData.get('status') as string;
-    const currentRequestId = formData.get('requestId') as string;
-
-    const cookieStore = await cookies();
-    const serverSupabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
-    );
-    const { error } = await serverSupabase
-      .from('help_requests')
-      .update({ status: newStatus })
-      .eq('id', currentRequestId);
-
-    if (error) {
-      console.error('Error updating status:', error);
-    } else {
-      revalidatePath(`/admin/requests/${currentRequestId}`);
-    }
-  };
-
-  const updateAdminNotes = async (formData: FormData) => {
-    'use server';
-    const newNotes = formData.get('adminNotes') as string;
-    const currentRequestId = formData.get('requestId') as string;
-
-    const cookieStore = await cookies();
-    const serverSupabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
-    );
-    const { error } = await serverSupabase
-      .from('help_requests')
-      .update({ admin_notes: newNotes })
-      .eq('id', currentRequestId);
-
-    if (error) {
-      console.error('Error updating admin notes:', error);
-    } else {
-      revalidatePath(`/admin/requests/${currentRequestId}`);
-    }
-  };
-
-
-  // --- Matching Logic ---
-  // Fetch volunteers based on location and type of help
-  const { data: matchingVolunteers, error: volunteersFetchError } = await supabase
+  const { data, error } = await supabase
     .from('volunteers')
     .select('*')
-    .eq('location', request.location) // Match by location
-    .contains('type_of_help', [request.type_of_need]) // Match by type of need
-    .eq('status', 'available'); // Only available volunteers
+    .ilike('location', `%${location}%`)
+    .eq('status', 'available')
+    .contains('type_of_help', [typeOfNeed]);
 
-  if (volunteersFetchError) {
-    console.error('Error fetching matching volunteers:', volunteersFetchError);
-    // Continue rendering the page even if volunteers can't be fetched
+  if (error) {
+    console.error('Error fetching suggested volunteers:', error);
+    return [];
   }
+  return data;
+}
 
-  const requestStatuses = ['open', 'in_progress', 'completed', 'cancelled'];
+export default async function RequestDetailsPage({ params }: { params: { id: string } }) {
+  const request = await getHelpRequestDetails(params.id);
 
-  return (
-    <main className="min-h-screen p-4 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
-      <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h1 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-6">
-          Help Request Details - {request.id.substring(0, 8)}...
-        </h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <div>
-            <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">Request Information</h2>
-            <p><strong>Name:</strong> {request.name || 'N/A'}</p>
-            <p><strong>Contact:</strong> {request.contact_info}</p>
-            <p><strong>Location:</strong> {request.location}</p>
-            <p><strong>Type of Need:</strong> {request.type_of_need}</p>
-            <p><strong>Urgency:</strong> {request.urgency}</p>
-            <p><strong>Requested On:</strong> {new Date(request.created_at).toLocaleString()}</p>
-            <p><strong>Description:</strong> {request.description || 'N/A'}</p>
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">Status & Assignment</h2>
-            <p className="mb-2"><strong>Current Status:</strong> <span className="font-semibold text-blue-600">{request.status}</span></p>
-
-            <form action={updateRequestStatus} className="flex gap-2 items-center mb-4">
-              <input type="hidden" name="requestId" value={request.id} />
-              <label htmlFor="statusSelect" className="sr-only">Update Status</label>
-              <select
-                id="statusSelect"
-                name="status"
-                defaultValue={request.status}
-                className="block w-full md:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              >
-                {requestStatuses.map((statusOption) => (
-                  <option key={statusOption} value={statusOption}>{statusOption.replace('_', ' ')}</option>
-                ))}
-              </select>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md shadow-md transition-colors text-sm"
-              >
-                Update
-              </button>
-            </form>
-
-            <p className="mb-2"><strong>Assigned Volunteer:</strong> {request.assigned_volunteer_id ? (
-              <span className="font-semibold">{request.assigned_volunteer_id}</span>
-            ) : (
-              'Not yet assigned.'
-            )}</p>
-            {request.assigned_volunteer_id && (
-                <form action={unassignVolunteer}>
-                    <input type="hidden" name="requestId" value={request.id} />
-                    <button type="submit" className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-md shadow-md transition-colors text-sm">
-                        Unassign Volunteer
-                    </button>
-                </form>
-            )}
-
-            <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-800 dark:text-gray-100">Admin Notes</h3>
-            <form action={updateAdminNotes}>
-                <input type="hidden" name="requestId" value={request.id} />
-                <textarea
-                    name="adminNotes"
-                    rows={3}
-                    defaultValue={request.admin_notes || ''}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                ></textarea>
-                <button
-                    type="submit"
-                    className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-md transition-colors text-sm"
-                >
-                    Save Notes
-                </button>
-            </form>
-          </div>
-        </div>
-
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
-          Suggested Volunteers for {request.type_of_need} in {request.location}
-        </h2>
-        {matchingVolunteers && matchingVolunteers.length > 0 ? (
-          <div className="overflow-x-auto mb-8">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Location
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Can Help With
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Availability
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {matchingVolunteers.map((volunteer) => (
-                  <tr key={volunteer.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50">{volunteer.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50">{volunteer.contact_info}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50">{volunteer.location}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50">
-                      {volunteer.type_of_help.join(', ')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-50">{volunteer.availability || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <form action={assignVolunteer}>
-                          <input type="hidden" name="volunteerId" value={volunteer.id} />
-                          <input type="hidden" name="requestId" value={request.id} />
-                          <button type="submit" className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-2">Assign</button>
-                      </form>
-                      <a
-                        href={`mailto:${volunteer.contact_info}?subject=Help Request for: ${request.type_of_need} in ${request.location}&body=Hi ${volunteer.name},%0A%0AWe are contacting you about a help request in your area. Please see the details below:%0A%0A- Type of Need: ${request.type_of_need}%0A- Location: ${request.location}%0A%0AThank you for your help!%0A%0A`}
-                        className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300"
-                      >
-                        Contact
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-600 dark:text-gray-300 mb-8">No matching volunteers found for this request based on location and type of need.</p>
-        )}
-
-        <Link href="/admin/dashboard" className="inline-block px-6 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium rounded-md shadow-md transition-colors">
+  if (!request) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-8 text-center">
+        <h1 className="text-2xl font-bold text-red-600">Request not found</h1>
+        <Link href="/admin/dashboard" className="mt-4 inline-block text-emerald-600 hover:underline">
           Back to Dashboard
         </Link>
       </div>
-    </main>
+    );
+  }
+
+  const suggestedVolunteers = await getSuggestedVolunteers(request.location, request.type_of_need);
+
+  // Server Action to assign a volunteer
+  async function assignVolunteer(formData: FormData) {
+    'use server';
+
+    const volunteerId = formData.get('volunteerId')?.toString();
+    const requestId = formData.get('requestId')?.toString();
+
+    if (!volunteerId || !requestId) {
+      console.error('Missing volunteerId or requestId');
+      return;
+    }
+
+    const cookieStore = cookies();
+    const supabase = createServerComponentClient({ cookies: () => cookieStore });
+
+    // In a real app, you'd wrap these in a transaction (e.g., via a db function)
+    const { error: requestUpdateError } = await supabase
+      .from('help_requests')
+      .update({ status: 'in_progress', assigned_volunteer_id: volunteerId })
+      .eq('id', requestId);
+
+    if (requestUpdateError) {
+      console.error('Error updating help request:', requestUpdateError);
+      return;
+    }
+
+    const { error: volunteerUpdateError } = await supabase
+      .from('volunteers')
+      .update({ status: 'assigned' })
+      .eq('id', volunteerId);
+
+    if (volunteerUpdateError) {
+      console.error('Error updating volunteer:', volunteerUpdateError);
+      // Note: You might want to handle rollback logic here
+      return;
+    }
+
+    revalidatePath(`/admin/requests/${requestId}`);
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6">
+          <Link href="/admin/dashboard" className="text-sm text-emerald-600 hover:underline">
+            &larr; Back to Dashboard
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+            Request Details
+          </h1>
+        </div>
+
+        {/* Request Details Section */}
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-8">
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
+            Help Request #{request.id.substring(0, 8)}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            {/* ... request details fields ... */}
+            <div>
+              <p className="font-medium text-gray-500 dark:text-gray-400">Name</p>
+              <p className="text-gray-900 dark:text-gray-100">{request.name || 'Not provided'}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-500 dark:text-gray-400">Contact Info</p>
+              <p className="text-gray-900 dark:text-gray-100">{request.contact_info}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-500 dark:text-gray-400">Location</p>
+              <p className="text-gray-900 dark:text-gray-100">{request.location}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-500 dark:text-gray-400">Type of Need</p>
+              <p className="text-gray-900 dark:text-gray-100">{request.type_of_need}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-500 dark:text-gray-400">Urgency</p>
+              <p className="text-gray-900 dark:text-gray-100">{request.urgency}</p>
+            </div>
+            <div>
+              <p className="font-medium text-gray-500 dark:text-gray-400">Status</p>
+              <p className="text-gray-900 dark:text-gray-100 font-semibold">{request.status}</p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="font-medium text-gray-500 dark:text-gray-400">Description</p>
+              <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{request.description || 'No description provided.'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Assigned Volunteer Section */}
+        {request.status !== 'open' && request.volunteer && (
+          <div className="bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800 shadow-md rounded-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold text-green-800 dark:text-green-100 mb-4">
+              Assigned Volunteer
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-medium text-gray-500 dark:text-gray-400">Name</p>
+                  <p className="text-gray-900 dark:text-gray-100">{request.volunteer.name}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-500 dark:text-gray-400">Contact</p>
+                  <p className="text-gray-900 dark:text-gray-100">{request.volunteer.contact_info}</p>
+                </div>
+            </div>
+          </div>
+        )}
+
+        {/* Suggested Volunteers Section */}
+        {request.status === 'open' && (
+          <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Suggested Volunteers</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {suggestedVolunteers.length > 0
+                  ? `Found ${suggestedVolunteers.length} matching volunteers.`
+                  : 'No matching volunteers found.'}
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Location</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Availability</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {suggestedVolunteers.map((volunteer) => (
+                    <tr key={volunteer.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{volunteer.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{volunteer.contact_info}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{volunteer.location}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{volunteer.availability || 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <form action={assignVolunteer}>
+                            <input type="hidden" name="volunteerId" value={volunteer.id} />
+                            <input type="hidden" name="requestId" value={request.id} />
+                            <button type="submit" className="text-emerald-600 hover:text-emerald-900 disabled:text-gray-400">
+                                Assign
+                            </button>
+                        </form>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {suggestedVolunteers.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">No volunteers found matching the request criteria.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
