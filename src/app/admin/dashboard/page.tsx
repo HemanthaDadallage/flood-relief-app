@@ -6,7 +6,7 @@ export const revalidate = 0; // Revalidate data on every request
 
 async function getHelpRequests() {
   const cookieStore = cookies();
-  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  const supabase = createServerClient({ cookies: () => cookieStore });
 
   const { data, error } = await supabase
     .from('help_requests')
