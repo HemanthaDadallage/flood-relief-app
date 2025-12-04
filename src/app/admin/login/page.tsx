@@ -16,20 +16,28 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError('');
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (signInError) {
-      setError(signInError.message);
+      if (signInError) {
+        // This handles known auth errors (e.g., wrong password)
+        throw signInError;
+      }
+
+      // On successful login, the middleware should handle the redirect.
+      // We can also add a client-side push as a fallback.
+      router.refresh(); // This re-runs the middleware
+      router.push('/admin/dashboard');
+
+    } catch (err: any) {
+      console.error('Login Error:', err);
+      setError(err.message || 'An unexpected error occurred.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // On successful login, the middleware should handle the redirect.
-    // We can also add a client-side push as a fallback.
-    router.push('/admin/dashboard');
   };
 
   return (
