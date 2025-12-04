@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
@@ -7,7 +8,8 @@ export const revalidate = 0;
 
 // Fetch details for a single help request, including assigned volunteer info
 async function getHelpRequestDetails(id: string) {
-  const supabase = createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
   const { data, error } = await supabase
     .from('help_requests')
     .select(`
@@ -26,7 +28,8 @@ async function getHelpRequestDetails(id: string) {
 
 // Fetch suggested volunteers based on location and type of need
 async function getSuggestedVolunteers(location: string, typeOfNeed: string) {
-  const supabase = createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
   const { data, error } = await supabase
     .from('volunteers')
     .select('*')
@@ -42,7 +45,8 @@ async function getSuggestedVolunteers(location: string, typeOfNeed: string) {
 }
 
 export default async function RequestDetailsPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
   const {
     data: { user },
@@ -90,7 +94,8 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
       return;
     }
 
-    const supabase = createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
     
     // In a real app, you'd wrap these in a transaction (e.g., via a db function)
     const { error: requestUpdateError } = await supabase

@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 export const revalidate = 0;
 
 async function getHelpRequests() {
-  const supabase = createClient();
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
   const {
     data: { user },
