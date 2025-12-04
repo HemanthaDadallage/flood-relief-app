@@ -8,7 +8,7 @@ export const revalidate = 0;
 
 // Fetch details for a single help request, including assigned volunteer info
 async function getHelpRequestDetails(id: string) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const { data, error } = await supabase
     .from('help_requests')
@@ -28,7 +28,7 @@ async function getHelpRequestDetails(id: string) {
 
 // Fetch suggested volunteers based on location and type of need
 async function getSuggestedVolunteers(location: string, typeOfNeed: string) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const { data, error } = await supabase
     .from('volunteers')
@@ -45,7 +45,7 @@ async function getSuggestedVolunteers(location: string, typeOfNeed: string) {
 }
 
 export default async function RequestDetailsPage({ params }: { params: { id: string } }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
   const {
@@ -94,7 +94,7 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
       return;
     }
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
     
     // In a real app, you'd wrap these in a transaction (e.g., via a db function)

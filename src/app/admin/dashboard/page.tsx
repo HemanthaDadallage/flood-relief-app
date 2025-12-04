@@ -6,7 +6,7 @@ import Link from 'next/link';
 export const revalidate = 0;
 
 async function getHelpRequests() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
   const {
