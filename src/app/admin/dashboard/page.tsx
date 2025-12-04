@@ -1,16 +1,31 @@
-import { createServerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
-export const revalidate = 0; // Revalidate data on every request
+export const revalidate = 0;
 
 async function getHelpRequests() {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: cookieStore }
-  );
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirect('/admin/login');
+  }
+
+  // Check if the user is an admin
+  const { data: adminProfile, error: adminError } = await supabase
+    .from('admin_profiles')
+    .select('id')
+    .eq('id', user.id)
+    .single();
+
+  if (adminError || !adminProfile) {
+    // This is a basic check. You might want to redirect to a more specific "unauthorized" page.
+    return redirect('/admin/login?message=You are not authorized to access this page.');
+  }
 
   const { data, error } = await supabase
     .from('help_requests')

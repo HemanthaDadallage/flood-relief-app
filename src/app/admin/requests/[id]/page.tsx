@@ -1,19 +1,13 @@
-import { createServerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 
-export const revalidate = 0; // Revalidate data on every request
+export const revalidate = 0;
 
 // Fetch details for a single help request, including assigned volunteer info
 async function getHelpRequestDetails(id: string) {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: cookieStore }
-  );
-
+  const supabase = createClient();
   const { data, error } = await supabase
     .from('help_requests')
     .select(`
@@ -32,13 +26,7 @@ async function getHelpRequestDetails(id: string) {
 
 // Fetch suggested volunteers based on location and type of need
 async function getSuggestedVolunteers(location: string, typeOfNeed: string) {
-  const cookieStore = cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: cookieStore }
-  );
-
+  const supabase = createClient();
   const { data, error } = await supabase
     .from('volunteers')
     .select('*')
@@ -54,6 +42,27 @@ async function getSuggestedVolunteers(location: string, typeOfNeed: string) {
 }
 
 export default async function RequestDetailsPage({ params }: { params: { id: string } }) {
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirect('/admin/login');
+  }
+  
+  // Check if the user is an admin
+  const { data: adminProfile, error: adminError } = await supabase
+    .from('admin_profiles')
+    .select('id')
+    .eq('id', user.id)
+    .single();
+
+  if (adminError || !adminProfile) {
+    return redirect('/admin/login?message=You are not authorized to access this page.');
+  }
+
   const request = await getHelpRequestDetails(params.id);
 
   if (!request) {
@@ -81,13 +90,8 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
       return;
     }
 
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: cookieStore }
-  );
-
+    const supabase = createClient();
+    
     // In a real app, you'd wrap these in a transaction (e.g., via a db function)
     const { error: requestUpdateError } = await supabase
       .from('help_requests')
@@ -112,7 +116,6 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
 
     revalidatePath(`/admin/requests/${requestId}`);
   }
-
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">

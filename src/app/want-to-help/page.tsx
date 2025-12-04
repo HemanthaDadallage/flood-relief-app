@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase'; // Import the Supabase client
+import { createClient } from '@/lib/supabase/client';
 
 export default function WantToHelpPage() {
   const [name, setName] = useState('');
@@ -34,6 +34,7 @@ export default function WantToHelpPage() {
       return;
     }
 
+    const supabase = createClient();
     try {
       const { error: supabaseError } = await supabase
         .from('volunteers')
