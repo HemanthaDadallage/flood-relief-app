@@ -11,7 +11,7 @@ async function getHelpRequestDetails(id: string) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: () => cookieStore }
+    { cookies: cookieStore }
   );
 
   const { data, error } = await supabase
@@ -36,7 +36,7 @@ async function getSuggestedVolunteers(location: string, typeOfNeed: string) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: () => cookieStore }
+    { cookies: cookieStore }
   );
 
   const { data, error } = await supabase
@@ -85,7 +85,7 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
     const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: () => cookieStore }
+    { cookies: cookieStore }
   );
 
     // In a real app, you'd wrap these in a transaction (e.g., via a db function)
