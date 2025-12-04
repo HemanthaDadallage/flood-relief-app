@@ -8,7 +8,11 @@ export const revalidate = 0; // Revalidate data on every request
 // Fetch details for a single help request, including assigned volunteer info
 async function getHelpRequestDetails(id: string) {
   const cookieStore = cookies();
-  const supabase = createServerClient({ cookies: () => cookieStore });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: () => cookieStore }
+  );
 
   const { data, error } = await supabase
     .from('help_requests')
@@ -29,7 +33,11 @@ async function getHelpRequestDetails(id: string) {
 // Fetch suggested volunteers based on location and type of need
 async function getSuggestedVolunteers(location: string, typeOfNeed: string) {
   const cookieStore = cookies();
-  const supabase = createServerClient({ cookies: () => cookieStore });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: () => cookieStore }
+  );
 
   const { data, error } = await supabase
     .from('volunteers')
@@ -74,7 +82,11 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
     }
 
     const cookieStore = cookies();
-    const supabase = createServerClient({ cookies: () => cookieStore });
+    const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: () => cookieStore }
+  );
 
     // In a real app, you'd wrap these in a transaction (e.g., via a db function)
     const { error: requestUpdateError } = await supabase
