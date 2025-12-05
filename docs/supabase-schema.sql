@@ -90,12 +90,12 @@ drop policy if exists "admins can manage admin_profiles" on public.admin_profile
 -- Policies: public submission
 create policy "public can create help_requests" on public.help_requests
   for insert
-  to anon
+  to public
   with check (true);
 
 create policy "public can create volunteers" on public.volunteers
   for insert
-  to anon
+  to public
   with check (true);
 
 -- Policies: admins can read/update

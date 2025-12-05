@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { revalidatePath } from 'next/cache';
 
 export const revalidate = 0;
 
@@ -68,6 +69,50 @@ async function getVolunteers() {
 }
 
 export default async function AdminDashboard() {
+  async function updateHelpRequestStatus(formData: FormData) {
+    'use server';
+
+    const id = formData.get('id')?.toString();
+    const status = formData.get('status')?.toString();
+    const allowedStatuses = ['open', 'in_progress', 'completed', 'cancelled'];
+
+    if (!id || !status || !allowedStatuses.includes(status)) {
+      return;
+    }
+
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return redirect('/admin/login');
+    }
+
+    const { data: adminProfile } = await supabase
+      .from('admin_profiles')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+
+    if (!adminProfile) {
+      return redirect('/admin/login?message=You are not authorized to access this page.');
+    }
+
+    const { error } = await supabase
+      .from('help_requests')
+      .update({ status })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating help request status:', error);
+      return;
+    }
+
+    revalidatePath('/admin/dashboard');
+  }
+
   const helpRequests = await getHelpRequests();
   const volunteers = await getVolunteers();
 
@@ -95,10 +140,16 @@ export default async function AdminDashboard() {
                     Date
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Location
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Type of Need
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Description
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Urgency
@@ -117,11 +168,20 @@ export default async function AdminDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {new Date(request.created_at).toLocaleString()}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-xs">
+                      <div className="font-medium">{request.name || '—'}</div>
+                      <div className="text-gray-600 dark:text-gray-300 truncate">{request.contact_info}</div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {request.location}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {request.type_of_need}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 max-w-md">
+                      <div className="truncate">
+                        {request.description ? request.description : 'No description provided.'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -140,10 +200,29 @@ export default async function AdminDashboard() {
                         {request.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link href={`/admin/requests/${request.id}`} className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-200">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-y-1">
+                      <Link href={`/admin/requests/${request.id}`} className="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-200 block">
                         View Details
                       </Link>
+                      <form action={updateHelpRequestStatus} className="flex flex-wrap gap-1 justify-end">
+                        <input type="hidden" name="id" value={request.id} />
+                        <button
+                          type="submit"
+                          name="status"
+                          value="in_progress"
+                          className="rounded border border-amber-300 px-2 py-1 text-xs text-amber-800 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-900/30"
+                        >
+                          Mark In Progress
+                        </button>
+                        <button
+                          type="submit"
+                          name="status"
+                          value="completed"
+                          className="rounded border border-green-300 px-2 py-1 text-xs text-green-800 hover:bg-green-50 dark:border-green-700 dark:text-green-200 dark:hover:bg-green-900/30"
+                        >
+                          Mark Done
+                        </button>
+                      </form>
                     </td>
                   </tr>
                 ))}
